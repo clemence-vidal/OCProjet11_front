@@ -1,0 +1,23 @@
+html {
+    font-family: Avenir, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    color: #2c3e50;
+}
+
+body {
+    margin: 0 auto;
+    /* max-width: 1440px; */
+}
+
+.main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: calc(100vh - (68px + 107px));
+}
+
+.bg-dark {
+    background-color: #12002b;
+}
