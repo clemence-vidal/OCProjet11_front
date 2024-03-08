@@ -3,19 +3,22 @@ import "./profile.css";
 import AccountContent from "../../components/AccountContent/accountContent";
 import useAuth from "../../app/useAuth";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUserData, updateUsername } from "../../app/api";
+// import { fetchUserData, updateUsername } from "../../app/api";
+import { fetchUserData, userDataAsync } from "../../app/api";
 import { UpdateUsernameAsync } from "../../app/userSlice";
+import Header from "../../components/Header/header";
 
 function User(isLoggedIn) {
     useAuth(isLoggedIn);
     const [showForm, setShowForm] = useState(false);
     // const [username, setUsername] = useState("");
-    const username = useSelector((state) => state.user.username);
+    // const username = useSelector((state) => state.user.username);
+    const [userName, setUserName] = useState("");
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);    
-    const [newUsername, setNewUsername] = useState("");
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const [newUserName, setNewUsername] = useState("");
+    // const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     const dispatch = useDispatch();
 
     const showUserForm = () => {
@@ -28,14 +31,15 @@ function User(isLoggedIn) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (newUsername === username) {
+        console.log(newUserName);
+        if (newUserName === userName) {
             alert("Please choose a new username.")
         } else if (window.confirm('Do you really want to change your username?')) {
             try {
-                await updateUsername(newUsername, token);
-                // dispatch(UpdateUsernameAsync(newUsername));
-                // setUsername(newUsername);
-                dispatch(UpdateUsernameAsync({newUsername, token}));
+                // dispatch(UpdateUsernameAsync(newUserName));
+                dispatch(UpdateUsernameAsync({ newUserName }));
+                setUserName(newUserName);
+                <Header userName={newUserName} />
                 alert("Username was successfully updated.");
             } catch (error) {
                 console.error("Error updating username:", error);
@@ -43,30 +47,50 @@ function User(isLoggedIn) {
         } 
     }
 
-    useEffect(() => {        
-        console.log("isAuthenticated changed:", isAuthenticated);
-        const fetchProfileData = async () => {
-          const userData = await fetchUserData();
-          console.log("User data:", userData); ////
-          console.log("User data body:", userData.body); ////
+    // useEffect(() => {        
+    //     console.log("isAuthenticated changed:", isAuthenticated);
+    //     const fetchProfileData = async () => {
+    //       const userData = fetchUserData();
+    //       console.log("User data:", userData); ////
       
-          if (userData && userData.body) {
-            // setUsername(userData.body.userName);
-            setFirstName(userData.body.firstName);
-            setLastName(userData.body.lastName);
-          }
-        };
-        fetchProfileData();
-      }, [isAuthenticated]);
+    // //       if (userData) {
+    //         setUserName(userData.userName);
+    //         setFirstName(userData.firstName);
+    //         setLastName(userData.lastName);
+    //       }
+    //     };
+    //     fetchProfileData();
+    //   }, [isAuthenticated]);
 
-      console.log("fetchUserData:", fetchUserData);
+
+      useEffect(() => {
+        const fetchProfileData = async () => {
+                const userData = await dispatch(userDataAsync());
+                console.log("userDataAsync:", userDataAsync);
+                console.log("userdata : ", userData);
+                try {
+                    if (userData) {
+                        dispatch(userDataAsync())
+                        setUserName(userData.payload.body.userName);
+                        setFirstName(userData.payload.body.firstName);
+                        setLastName(userData.payload.body.lastName);
+                }
+            } catch (error) {                
+                console.error("Error fetching profile data:", error);
+            }
+        };
+        if (isAuthenticated) {
+            fetchProfileData();
+        }
+      }, [isAuthenticated, dispatch]);
+
 
     return (
         <main className="main bg-dark">
             <div className="header">
                 <h1>
                     Welcome back<br/>
-                    {username}!
+                    {userName}!
                 </h1>
                 <button 
                 className="edit-button"

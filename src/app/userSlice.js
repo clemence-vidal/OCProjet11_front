@@ -1,22 +1,25 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-export const UpdateUsernameAsync = createAsyncThunk("user/updateUsername", async ({ newUsername, token }) => { 
-    try {   
-        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+const token = localStorage.getItem("token") || sessionStorage.getItem("token");      
+
+export const UpdateUsernameAsync = createAsyncThunk("user/updateUsername", async ({ newUserName }) => { 
+    try {     
+        console.log(newUserName);
         const response = await fetch("http://localhost:3001/api/v1/user/profile", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
                 },
-                body: JSON.stringify({ username: newUsername }),
+                body: JSON.stringify({ userName: newUserName }),
             });
+            
             if (!response.ok) {
                 throw new Error("failed to update username");
             }
-
             const data = await response.json();
-            return data.body; //data.body.username
+            console.log(data);
+            return data; //data.body.username
         } catch (error) {            
             // throw new Error("error");
             console.error("Error updating username:", error);
@@ -30,6 +33,7 @@ const updateUserSlice = createSlice({
         userName: "",
         status: "idle",
         error: null,
+        isAuthenticated: !!localStorage.getItem("token") || !!sessionStorage.getItem("token"),
     },
     reducers: {},
     extraReducers: (builder) => {
@@ -41,8 +45,9 @@ const updateUserSlice = createSlice({
             .addCase(UpdateUsernameAsync.fulfilled, (state, action) => {
                 state.status = "onSuccess";
                 state.userName = action.payload.userName;
+                console.log(action.payload.body.userName);
             })
-                .addCase(UpdateUsernameAsync.rejected, (state, action) => {console.error("Update username rejected:", action.error.message);
+            .addCase(UpdateUsernameAsync.rejected, (state, action) => {console.error("Update username rejected:", action.error.message);
                 state.status = "failed";            
             });
     },
