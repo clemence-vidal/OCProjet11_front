@@ -8,7 +8,7 @@ import "./home.css";
 
 function Home() {
     return (
-        <div>
+        <div className="main-content">
             <Banner />
             <section className="features">
                 <h2 className="sr-only">Features</h2>
