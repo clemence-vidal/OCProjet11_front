@@ -1,8 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const token = localStorage.getItem("token") || sessionStorage.getItem("token");      
-
-export const UpdateUsernameAsync = createAsyncThunk("user/updateUsername", async ({ newUserName }) => { 
+export const UpdateUsernameAsync = createAsyncThunk("user/updateUsername", async ({ newUserName, token }) => { 
     try {     
         console.log(newUserName);
         const response = await fetch("http://localhost:3001/api/v1/user/profile", {
@@ -27,11 +25,38 @@ export const UpdateUsernameAsync = createAsyncThunk("user/updateUsername", async
     }
 })
 
+export const userDataAsync = createAsyncThunk("user/userData", async (token) => {
+    try {        
+      if (!token) {
+        throw new Error("No token found.");
+      }
+      const response = await fetch('http://localhost:3001/api/v1/user/profile', {
+        method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
+      }}); 
+      if (!response.ok) {        
+        throw new Error("failed");        
+      } else {
+        const userData = await response.json();
+        console.log("api userdate:", userData);
+        return userData;
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      return null;
+    }
+  })
+
+
 const updateUserSlice = createSlice({
     name: "user",
     initialState: {
         userName: "",
         status: "idle",
+        firstName: "",
+        lastName: "",
         error: null,
         isAuthenticated: !!localStorage.getItem("token") || !!sessionStorage.getItem("token"),
     },
@@ -46,9 +71,33 @@ const updateUserSlice = createSlice({
                 state.status = "onSuccess";
                 state.userName = action.payload.userName;
                 console.log(action.payload.body.userName);
+                console.log(action.payload.body.userName);
             })
             .addCase(UpdateUsernameAsync.rejected, (state, action) => {console.error("Update username rejected:", action.error.message);
                 state.status = "failed";            
+            })
+            .addCase(userDataAsync.pending, (state) => {
+                state.status = "loading";
+                state.error = null;
+            })
+            .addCase(userDataAsync.fulfilled, (state, action) => {
+                state.status = "onSuccess";
+                if (action.payload && action.payload.body) {
+                    state.userName = action.payload?.body.userName;
+                    state.firstName = action.payload?.body.firstName;
+                    state.lastName = action.payload?.body.lastName;
+                }
+            })
+            .addCase(userDataAsync.rejected, (state) => {
+                state.status = "failed";
+            })
+            .addCase("auth/logout", (state) => {
+                state.isAuthenticated = false;
+                state.userName = "";
+                state.firstName = "";
+                state.lastName = "";
+                state.status = "idle";
+                state.error = null;
             });
     },
 });
